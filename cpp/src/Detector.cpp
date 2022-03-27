@@ -1,6 +1,8 @@
-#include <fstream>
 
-#include <opencv2/opencv.hpp>
+#include <Detector.h>
+#include <Tracker.h>
+
+using namespace xx_det;
 
 std::vector<std::string> load_class_list()
 {
@@ -32,20 +34,6 @@ void load_net(cv::dnn::Net &net, bool is_cuda)
     net = result;
 }
 
-const std::vector<cv::Scalar> colors = {cv::Scalar(255, 255, 0), cv::Scalar(0, 255, 0), cv::Scalar(0, 255, 255), cv::Scalar(255, 0, 0)};
-
-const float INPUT_WIDTH = 640.0;
-const float INPUT_HEIGHT = 640.0;
-const float SCORE_THRESHOLD = 0.2;
-const float NMS_THRESHOLD = 0.4;
-const float CONFIDENCE_THRESHOLD = 0.4;
-
-struct Detection
-{
-    int class_id;
-    float confidence;
-    cv::Rect box;
-};
 
 cv::Mat format_yolov5(const cv::Mat &source) {
     int col = source.cols;
@@ -146,6 +134,8 @@ int main(int argc, char **argv)
     float fps = -1;
     int total_frames = 0;
 
+    xx_tracker::Tracker tracker;
+
     while (true)
     {
         capture.read(frame);
@@ -157,7 +147,7 @@ int main(int argc, char **argv)
 
         std::vector<Detection> output;
         detect(frame, net, output, class_list);
-
+        tracker.updateInstances(output, frame);
         frame_count++;
         total_frames++;
 
